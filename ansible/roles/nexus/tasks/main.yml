@@ -1,0 +1,22 @@
+---
+- name: Create Nexus data directory
+  ansible.builtin.file:
+    path: /opt/nexus-data
+    state: directory
+    mode: "0777"
+
+- name: Pull Sonatype Nexus image
+  community.docker.docker_image:
+    name: sonatype/nexus3
+    tag: latest
+    source: pull
+
+- name: Run Nexus container
+  community.docker.docker_container:
+    name: nexus
+    image: sonatype/nexus3:latest
+    restart_policy: always
+    ports:
+      - "8081:8081"
+    volumes:
+      - /opt/nexus-data:/nexus-data

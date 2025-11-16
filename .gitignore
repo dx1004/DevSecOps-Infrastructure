@@ -1,0 +1,6 @@
+*.pem
+.terraform/
+.terraform.lock.hcl
+terraform.tfstate
+terraform.tfstate.*
+ansible/inventory/hosts.ini

@@ -1,0 +1,12 @@
+[jenkins]
+jenkins ansible_host=${jenkins_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${private_key_path}
+
+[nexus]
+nexus ansible_host=${nexus_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${private_key_path}
+
+[sonarqube]
+sonarqube ansible_host=${sonarqube_ip} ansible_user=ubuntu ansible_ssh_private_key_file=${private_key_path}
+
+[all:vars]
+ansible_python_interpreter=/usr/bin/python3
+ansible_ssh_common_args=-o StrictHostKeyChecking=no

@@ -1,0 +1,24 @@
+---
+- name: Apply base configuration to every server
+  hosts: all
+  become: true
+  roles:
+    - common
+
+- name: Configure Jenkins
+  hosts: jenkins
+  become: true
+  roles:
+    - jenkins
+
+- name: Configure Nexus
+  hosts: nexus
+  become: true
+  roles:
+    - nexus
+
+- name: Configure SonarQube
+  hosts: sonarqube
+  become: true
+  roles:
+    - sonarqube

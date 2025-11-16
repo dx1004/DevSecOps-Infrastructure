@@ -1,0 +1,46 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+ name: jenkins-secureapp
+ region: us-east-1 # Must match your subnet AZs
+ version: "1.33"   # Latest stable Kubernetes version
+
+vpc:
+ id: ""   # Replace with your VPC_ID
+ cidr: "10.0.0.0/16"   # Replace with your CIDR Value
+ subnets:
+   public:
+     us-east-1a: { id:  }   # Replace with your PUB_SUBNET1
+     us-east-1b: { id:  }   # Replace with your PUB_SUBNET2
+   private:
+     us-east-1a: { id:  }   # Replace with your PRI_SUBNET1
+     us-east-1b: { id:  }   # Replace with your PRI_SUBNET2
+     
+managedNodeGroups:
+ - name: worker-nodes
+   instanceType: t3.medium
+   minSize: 1
+   maxSize: 2
+   spot: false
+   ssh: 
+     allow: true
+     publicKeyName: jenkins-cluster-key
+   labels: { role: jenkins }
+   tags:
+     Name: worker-nodes
+
+addons:
+ - name: aws-ebs-csi-driver
+   version: latest
+ - name: eks-pod-identity-agent
+   version: latest
+ - name: vpc-cni
+   version: latest
+ - name: kube-proxy
+   version: latest
+ - name: coredns
+   version: latest
+
+addonsConfig:    
+  autoApplyPodIdentityAssociations: true

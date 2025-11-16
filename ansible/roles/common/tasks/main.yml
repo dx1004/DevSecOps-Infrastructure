@@ -1,0 +1,26 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+
+- name: Install base packages
+  ansible.builtin.apt:
+    name:
+      - git
+      - curl
+      - unzip
+      - docker.io
+      - python3-pip
+      - python3-docker
+    state: present
+  register: base_pkg_install
+  retries: 5
+  delay: 15
+  until: base_pkg_install is succeeded
+
+- name: Ensure Docker service is running
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
