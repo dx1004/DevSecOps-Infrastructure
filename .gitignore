@@ -4,3 +4,4 @@
 terraform.tfstate
 terraform.tfstate.*
 ansible/inventory/hosts.ini
+.terraform.tfstate.lock.info
