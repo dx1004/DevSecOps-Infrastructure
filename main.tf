@@ -324,7 +324,11 @@ module "secure_shop_eks" {
     }
   }
 
+  # Control-plane/network addons first; storage/metrics installed after nodes (see aws_eks_addon blocks below).
   addons = {
+    eks-pod-identity-agent = {
+      resolve_conflicts = "OVERWRITE"
+    }
     vpc-cni = {
       resolve_conflicts = "OVERWRITE"
     }
@@ -334,15 +338,34 @@ module "secure_shop_eks" {
     coredns = {
       resolve_conflicts = "OVERWRITE"
     }
-    aws-ebs-csi-driver = {
-      resolve_conflicts = "OVERWRITE"
-    }
-    eks-pod-identity-agent = {
-      resolve_conflicts = "OVERWRITE"
-    }
   }
 
   tags = {
     Project = var.vpc_name
   }
+}
+
+# Node-dependent addons applied after nodegroups are up, matching the eksctl deployment order.
+resource "aws_eks_addon" "aws_ebs_csi_driver" {
+  cluster_name         = module.secure_shop_eks.cluster_name
+  addon_name           = "aws-ebs-csi-driver"
+  resolve_conflicts    = "OVERWRITE"
+  configuration_values = null
+
+  depends_on = [
+    module.secure_shop_eks,
+    module.secure_shop_eks.eks_managed_node_groups
+  ]
+}
+
+resource "aws_eks_addon" "metrics_server" {
+  cluster_name      = module.secure_shop_eks.cluster_name
+  addon_name        = "metrics-server"
+  resolve_conflicts = "OVERWRITE"
+
+  depends_on = [
+    module.secure_shop_eks,
+    module.secure_shop_eks.eks_managed_node_groups,
+    aws_eks_addon.aws_ebs_csi_driver
+  ]
 }
