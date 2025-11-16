@@ -1,23 +1,40 @@
-⭐ DevSecOps Infrastructure on AWS (Terraform + Ansible + EKS)
-<p align="center"> <img src="https://img.shields.io/badge/AWS-Cloud%20Infra-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white"/> <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white"/> <img src="https://img.shields.io/badge/Ansible-Automation-EE0000?style=for-the-badge&logo=ansible&logoColor=white"/> <img src="https://img.shields.io/badge/Kubernetes-EKS-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/> </p> <p align="center">A production-style, fully automated DevSecOps environment built on AWS using Terraform, Ansible, and Amazon EKS.</p>
-📘 Project Overview
+# ⭐ **DevSecOps Infrastructure on AWS (Terraform + Ansible + EKS)**
 
-This project provisions a complete DevSecOps infrastructure stack that includes:
+<p align="center">
+  <img src="assets/banner.png" width="100%" />
+</p>
 
-Infrastructure as Code (Terraform)
+<h1 align="center">⚡ Enterprise DevSecOps Infrastructure</h1>
 
-Configuration automation (Ansible)
+<p align="center">
+  <b>Automated AWS Infrastructure with Terraform, Ansible, Jenkins, Nexus, SonarQube, and Amazon EKS</b>
+</p>
 
-Amazon EKS cluster for Kubernetes workloads
+<p align="center">
+  <img src="https://img.shields.io/badge/AWS-Cloud%20Infra-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Ansible-Automation-EE0000?style=for-the-badge&logo=ansible&logoColor=white"/>
+  <img src="https://img.shields.io/badge/Kubernetes-EKS-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white"/>
+</p>
 
-Jenkins, Nexus, and SonarQube as the DevSecOps toolchain
+---
 
-This setup mirrors a real-world enterprise environment and follows the exact expected deliverables required in the assignment.
+# 📘 **Overview**
 
-🏛 Architecture Diagram
+This repository builds a **production-style DevSecOps infrastructure** entirely using:
 
-(If you want, I can generate a polished black-gold PNG/SVG version.)
+- **Terraform**
+- **Ansible**
+- **EC2** instances for Jenkins / Nexus / SonarQube
+- **Amazon EKS** for Kubernetes orchestration
 
+It fully satisfies the assignment’s **Expected Deliverables**.
+
+---
+
+# 🏛️ **Architecture Diagram**
+
+```
 AWS VPC (10.0.0.0/16)
 │
 ├── Public Subnets
@@ -28,146 +45,149 @@ AWS VPC (10.0.0.0/16)
 └── Private Subnets
      └── Amazon EKS Cluster (secure-shop-eks)
           └── Worker Node Group (t3.medium)
+```
 
-📂 Repository Structure
+---
+
+# 📂 **Repository Structure**
+
+```
 .
 ├── ansible/
 │   ├── roles/
-│   ├── inventory/ (auto-generated)
+│   ├── inventory/
 │   └── site.yml
-├── Execution Example Screenshot/   <-- Required Deliverables
+├── Execution Example Screenshot/
 ├── main.tf
 ├── variables.tf
 ├── outputs.tf
 ├── versions.tf
-├── aws.sh (optional manual script)
+├── aws.sh
 └── README.md
+```
 
-🚀 Infrastructure Provisioning (Terraform)
-Required Deliverable
-1️⃣ Initialize Terraform
+---
+
+# 🚀 **Terraform Deployment**
+
+### Initialize
+```bash
 terraform init
+```
 
-2️⃣ Create Infrastructure
+### Apply
+```bash
 terraform apply
+```
 
-
-Terraform will create:
-
-VPC, subnets, route tables
-
-Internet Gateway
-
-Security groups
-
-EC2 instances (Jenkins, Nexus, SonarQube)
-
-RSA key pairs
-
-EKS cluster + Managed Node Group
-
-Ansible inventory file
-
-3️⃣ Destroy Infrastructure
+### Destroy
+```bash
 terraform destroy
+```
 
-🤖 Configuration Automation (Ansible)
-Required Deliverable
+Created resources include:
 
-After Terraform finishes:
+- VPC, subnets, route tables
+- Internet Gateway
+- Security groups
+- EC2 instances (Jenkins, Nexus, SonarQube)
+- Key pairs
+- EKS cluster + Managed Node Group
+- Ansible inventory
 
-Run Ansible Playbook
+---
+
+# 🤖 **Ansible Configuration**
+
+### Run
+```bash
 ansible-playbook -i ansible/inventory/hosts.ini ansible/site.yml
+```
 
+### Installs
 
-This installs:
+| Tool | Port |
+|------|------|
+| Jenkins | 8080 |
+| Nexus | 8081 |
+| SonarQube | 9000 |
+| Docker | — |
 
-🧩 Jenkins (port 8080)
+---
 
-📦 Nexus (port 8081)
+# ☸️ **Amazon EKS Cluster**
 
-🔍 SonarQube (port 9000)
-
-Docker, Git, unzip, system dependencies
-
-☸️ Amazon EKS Cluster
-Required Deliverable
-Export kubeconfig:
+### Configure kubeconfig
+```bash
 terraform output secure_shop_eks_kubeconfig > kubeconfig_secure_shop
 export KUBECONFIG=$PWD/kubeconfig_secure_shop
+```
 
-Verify Nodes
+### Validate
+```bash
 kubectl get nodes
+```
 
+Nodes must be **Ready**.
 
-Expected: worker nodes in Ready state.
+---
 
-🖼 Required Screenshots Folder (per PDF)
+# 🖼 **Screenshots (Required Deliverables)**
 
-All screenshots are stored in:
+All screenshots stored in:
 
+```
 Execution Example Screenshot/
+```
 
+Include:
 
-Must include:
+- Terraform apply success
+- VPC view
+- Subnets
+- EC2 list
+- Jenkins UI
+- Nexus UI
+- SonarQube UI
+- kubectl get nodes
 
-Terraform apply success
+---
 
-AWS VPC view
+# 🎯 **Tools Used**
 
-Subnets with auto-assign public IP (for public subnets)
+| Tool | Purpose |
+|------|---------|
+| AWS | Cloud provider |
+| Terraform | Infrastructure as Code |
+| Ansible | Configuration automation |
+| Kubernetes (EKS) | Orchestration |
+| Jenkins | CI/CD |
+| Nexus | Artifact repository |
+| SonarQube | Code quality |
 
-EC2 instances list
+---
 
-Jenkins Web UI
+# 🌟 **Portfolio Summary**
 
-Nexus Web UI
+This project showcases:
 
-SonarQube Web UI
+- Cloud infrastructure design
+- Terraform IaC expertise
+- Automated provisioning with Ansible
+- Kubernetes cluster deployment
+- Realistic DevSecOps pipeline foundation
 
-kubectl get nodes
+---
 
-💡 Tools Used
-Tool	Purpose
-AWS	Cloud infrastructure
-Terraform	Infrastructure as Code
-Ansible	Configuration automation
-Kubernetes (EKS)	Cluster orchestration
-Jenkins	CI/CD
-Nexus	Artifact repository
-SonarQube	Code quality & security
-🎯 Why This Project Is Valuable (Portfolio)
+# 🧹 Cleanup
 
-This project demonstrates proficiency in:
-
-Cloud infrastructure design
-
-Terraform modular IaC
-
-Ansible roles & automation
-
-Production-style DevSecOps architecture
-
-Kubernetes cluster provisioning
-
-Secure CI/CD pipeline foundations
-
-Recruiters and hiring managers will recognize:
-
-Real AWS experience
-
-Multi-tool DevOps orchestration
-
-Strong automation skills
-
-Hands-on EKS experience
-
-Ability to deliver full end-to-end infra
-
-🧹 Cleanup
+```bash
 terraform destroy
+```
 
-📫 Contact
+---
 
-Cloud Xu (阿霖)
+# 📫 Contact
+
+**Cloud Xu**  
 GitHub: https://github.com/dx1004

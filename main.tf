@@ -293,11 +293,12 @@ module "secure_shop_eks" {
   name               = var.eks_cluster_name
   kubernetes_version = var.eks_cluster_version
 
-  endpoint_public_access = true
-  enable_irsa                    = true
+  endpoint_public_access                   = true
+  enable_irsa                              = true
+  enable_cluster_creator_admin_permissions  = true
 
   vpc_id                   = aws_vpc.main.id
-  subnet_ids               = [for subnet in aws_subnet.private : subnet.id]
+  subnet_ids               = [for subnet in aws_subnet.public : subnet.id]
   control_plane_subnet_ids = distinct(concat(
     [for subnet in aws_subnet.public : subnet.id],
     [for subnet in aws_subnet.private : subnet.id]
@@ -320,6 +321,24 @@ module "secure_shop_eks" {
       tags = {
         Name = "worker-nodes"
       }
+    }
+  }
+
+  addons = {
+    vpc-cni = {
+      resolve_conflicts = "OVERWRITE"
+    }
+    kube-proxy = {
+      resolve_conflicts = "OVERWRITE"
+    }
+    coredns = {
+      resolve_conflicts = "OVERWRITE"
+    }
+    aws-ebs-csi-driver = {
+      resolve_conflicts = "OVERWRITE"
+    }
+    eks-pod-identity-agent = {
+      resolve_conflicts = "OVERWRITE"
     }
   }
 

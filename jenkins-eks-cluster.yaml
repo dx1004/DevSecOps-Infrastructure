@@ -7,15 +7,15 @@ metadata:
  version: "1.33"   # Latest stable Kubernetes version
 
 vpc:
- id: ""   # Replace with your VPC_ID
+ id: "vpc-047ebc91cc260178b"   # Replace with your VPC_ID
  cidr: "10.0.0.0/16"   # Replace with your CIDR Value
  subnets:
    public:
-     us-east-1a: { id:  }   # Replace with your PUB_SUBNET1
-     us-east-1b: { id:  }   # Replace with your PUB_SUBNET2
+     us-east-1a: { id: subnet-0a06bd0de5c1be7d3 }   # Replace with your PUB_SUBNET1
+     us-east-1b: { id: subnet-0ef68337f17aad732 }   # Replace with your PUB_SUBNET2
    private:
-     us-east-1a: { id:  }   # Replace with your PRI_SUBNET1
-     us-east-1b: { id:  }   # Replace with your PRI_SUBNET2
+     us-east-1a: { id: subnet-0528b0c1af842c320 }   # Replace with your PRI_SUBNET1
+     us-east-1b: { id: subnet-08c24d298ff5cb34d }   # Replace with your PRI_SUBNET2
      
 managedNodeGroups:
  - name: worker-nodes
