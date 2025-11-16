@@ -1,30 +1,79 @@
 ---
-- name: Create SonarQube directories
+- name: Remove legacy SonarQube container (pre-DB setup)
+  community.docker.docker_container:
+    name: sonarqube
+    state: absent
+    force_kill: true
+  ignore_errors: true
+
+- name: Ensure SonarQube data directories exist
   ansible.builtin.file:
     path: "{{ item }}"
     state: directory
-    mode: "0775"
+    mode: "0755"
   loop:
-    - /opt/sonarqube/data
-    - /opt/sonarqube/extensions
-    - /opt/sonarqube/logs
+    - /opt/sonar-data/postgres
+    - /opt/sonar-data/sonarqube_conf
+    - /opt/sonar-data/sonarqube_data
+    - /opt/sonar-data/sonarqube_logs
+    - /opt/sonar-data/sonarqube_extensions
 
-- name: Pull SonarQube image
+- name: Ensure SonarQube directories owned by sonar user
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "1000"
+    group: "1000"
+    mode: "0755"
+    recurse: true
+  loop:
+    - /opt/sonar-data/sonarqube_conf
+    - /opt/sonar-data/sonarqube_data
+    - /opt/sonar-data/sonarqube_logs
+    - /opt/sonar-data/sonarqube_extensions
+
+- name: Ensure SonarQube Docker network exists
+  community.docker.docker_network:
+    name: sonar-network
+
+- name: Pull required images for SonarQube stack
   community.docker.docker_image:
-    name: sonarqube
-    tag: lts
+    name: "{{ item.name }}"
+    tag: "{{ item.tag }}"
     source: pull
+  loop:
+    - { name: "postgres",  tag: "15" }
+    - { name: "sonarqube", tag: "lts-community" }
 
-- name: Run SonarQube container
+- name: Run PostgreSQL container for SonarQube
   community.docker.docker_container:
-    name: sonarqube
-    image: sonarqube:lts
-    restart_policy: always
+    name: sonar-db
+    image: postgres:15
+    restart_policy: unless-stopped
+    networks:
+      - name: sonar-network
+    env:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - /opt/sonar-data/postgres:/var/lib/postgresql/data
+
+- name: Run SonarQube container (with external Postgres)
+  community.docker.docker_container:
+    name: sonar
+    image: sonarqube:lts-community
+    restart_policy: unless-stopped
+    user: "1000:1000"
+    networks:
+      - name: sonar-network
     ports:
       - "9000:9000"
     env:
-      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      SONAR_JDBC_URL: "jdbc:postgresql://sonar-db:5432/sonar"
+      SONAR_JDBC_USERNAME: "sonar"
+      SONAR_JDBC_PASSWORD: "sonar"
     volumes:
-      - /opt/sonarqube/data:/opt/sonarqube/data
-      - /opt/sonarqube/extensions:/opt/sonarqube/extensions
-      - /opt/sonarqube/logs:/opt/sonarqube/logs
+      - /opt/sonar-data/sonarqube_conf:/opt/sonarqube/conf
+      - /opt/sonar-data/sonarqube_data:/opt/sonarqube/data
+      - /opt/sonar-data/sonarqube_logs:/opt/sonarqube/logs
+      - /opt/sonar-data/sonarqube_extensions:/opt/sonarqube/extensions

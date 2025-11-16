@@ -77,6 +77,17 @@ kubectl get pods -A
 
 Ensure node(s) are Ready and core addons are Running before deploying workloads.
 
+**Alternative kubeconfig (Terraform-rendered):**
+
+```bash
+terraform output -raw secure_shop_eks_kubeconfig > kubeconfig_secure_shop
+export KUBECONFIG=$PWD/kubeconfig_secure_shop
+kubectl config use-context secure-shop-eks
+kubectl get nodes
+```
+
+This avoids mutating your default kubeconfig and uses the template output directly.
+
 ## Key artifacts and outputs
 
 - PEM keys: `jenkins-key.pem` and `jenkins-cluster-key.pem` written locally with `0400` permissions.
@@ -88,6 +99,16 @@ Ensure node(s) are Ready and core addons are Running before deploying workloads.
 
 - Control plane/network installed with the EKS module: `eks-pod-identity-agent`, `vpc-cni`, `kube-proxy`, `coredns`.
 - Node-dependent addons applied after the node group is Ready via `aws_eks_addon`: `aws-ebs-csi-driver`, `metrics-server`.
+
+## Execution example screenshots
+
+Expected deliverables are captured under `Excution Example Screenshot/`:
+
+- ![Ansible playbook](Excution%20Example%20Screenshot/ansible-playbook.png)
+- ![Jenkins](Excution%20Example%20Screenshot/jenkins.png)
+- ![Nexus](Excution%20Example%20Screenshot/nexus.png)
+- ![SonarQube](Excution%20Example%20Screenshot/sonarqube.png)
+- ![kubectl](Excution%20Example%20Screenshot/kubectl.png)
 
 ## Cleanup
 

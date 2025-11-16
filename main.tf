@@ -304,68 +304,157 @@ module "secure_shop_eks" {
     [for subnet in aws_subnet.private : subnet.id]
   ))
 
-  eks_managed_node_groups = {
-    worker_nodes = {
-      min_size     = 1
-      max_size     = 2
-      desired_size = 1
-      instance_types = [var.eks_node_instance_type]
-      capacity_type  = "ON_DEMAND"
-      ami_type       = "AL2_x86_64"
-      disk_size      = 20
-
-      labels = {
-        role = "jenkins"
-      }
-
-      tags = {
-        Name = "worker-nodes"
-      }
-    }
-  }
-
-  # Control-plane/network addons first; storage/metrics installed after nodes (see aws_eks_addon blocks below).
-  addons = {
-    eks-pod-identity-agent = {
-      resolve_conflicts = "OVERWRITE"
-    }
-    vpc-cni = {
-      resolve_conflicts = "OVERWRITE"
-    }
-    kube-proxy = {
-      resolve_conflicts = "OVERWRITE"
-    }
-    coredns = {
-      resolve_conflicts = "OVERWRITE"
-    }
-  }
+  # Cluster-only; node groups and addons are defined as standalone resources below to control ordering.
+  eks_managed_node_groups = {}
 
   tags = {
     Project = var.vpc_name
   }
 }
 
+
+data "aws_eks_addon_version" "coredns_latest" {
+  addon_name         = "coredns"
+  kubernetes_version = var.eks_cluster_version
+  most_recent        = true
+}
+
+# Core control-plane/network addons follow the eksctl order: apply right after the
+# control plane is ready, before managed node groups.
+resource "aws_eks_addon" "eks_pod_identity_agent" {
+  cluster_name                = module.secure_shop_eks.cluster_name
+  addon_name                  = "eks-pod-identity-agent"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [module.secure_shop_eks]
+}
+
+resource "aws_eks_addon" "vpc_cni" {
+  cluster_name                = module.secure_shop_eks.cluster_name
+  addon_name                  = "vpc-cni"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [aws_eks_addon.eks_pod_identity_agent]
+}
+
+resource "aws_eks_addon" "kube_proxy" {
+  cluster_name                = module.secure_shop_eks.cluster_name
+  addon_name                  = "kube-proxy"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [aws_eks_addon.vpc_cni]
+}
+
+resource "aws_eks_addon" "coredns" {
+  cluster_name                = module.secure_shop_eks.cluster_name
+  addon_name                  = "coredns"
+  addon_version               = data.aws_eks_addon_version.coredns_latest.version
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [aws_eks_addon.kube_proxy]
+}
+
+# IAM role for managed node group
+resource "aws_iam_role" "eks_nodegroup" {
+  name = "${var.eks_cluster_name}-nodegroup-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ec2.amazonaws.com"
+        }
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "eks_nodegroup_worker" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy"
+  role       = aws_iam_role.eks_nodegroup.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_nodegroup_cni" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy"
+  role       = aws_iam_role.eks_nodegroup.name
+}
+
+resource "aws_iam_role_policy_attachment" "eks_nodegroup_ecr" {
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
+  role       = aws_iam_role.eks_nodegroup.name
+}
+
+# Allow node instances to call EBS APIs when controller pods fall back to the node role.
+resource "aws_iam_role_policy_attachment" "eks_nodegroup_ebs" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.eks_nodegroup.name
+}
+
+# Managed node group created after control-plane/network addons.
+resource "aws_eks_node_group" "worker_nodes" {
+  cluster_name    = module.secure_shop_eks.cluster_name
+  node_group_name = "worker-nodes"
+  node_role_arn   = aws_iam_role.eks_nodegroup.arn
+
+  subnet_ids = [for subnet in aws_subnet.public : subnet.id]
+
+  scaling_config {
+    desired_size = 1
+    min_size     = 1
+    max_size     = 2
+  }
+
+  instance_types = [var.eks_node_instance_type]
+  ami_type       = "AL2_x86_64"
+  disk_size      = 20
+  capacity_type  = "ON_DEMAND"
+
+  labels = {
+    role = "jenkins"
+  }
+
+  tags = {
+    Name = "worker-nodes"
+  }
+
+  depends_on = [
+    module.secure_shop_eks,
+    aws_iam_role_policy_attachment.eks_nodegroup_worker,
+    aws_iam_role_policy_attachment.eks_nodegroup_cni,
+    aws_iam_role_policy_attachment.eks_nodegroup_ecr
+  ]
+}
+
 # Node-dependent addons applied after nodegroups are up, matching the eksctl deployment order.
 resource "aws_eks_addon" "aws_ebs_csi_driver" {
   cluster_name         = module.secure_shop_eks.cluster_name
   addon_name           = "aws-ebs-csi-driver"
-  resolve_conflicts    = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
   configuration_values = null
 
   depends_on = [
     module.secure_shop_eks,
-    module.secure_shop_eks.eks_managed_node_groups
+    aws_eks_node_group.worker_nodes
   ]
 }
 
 resource "aws_eks_addon" "metrics_server" {
   cluster_name      = module.secure_shop_eks.cluster_name
   addon_name        = "metrics-server"
-  resolve_conflicts = "OVERWRITE"
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
 
   depends_on = [
     module.secure_shop_eks,
-    module.secure_shop_eks.eks_managed_node_groups,
+    aws_eks_node_group.worker_nodes,
     aws_eks_addon.aws_ebs_csi_driver
   ]
 }
