@@ -2,8 +2,6 @@
   <img src="https://raw.githubusercontent.com/dx1004/DevSecOps-Infrastructure/main/assets/banner.png" width="100%" />
 </p>
 
-<h1 align="center">⚡ DevSecOps Infrastructure on AWS</h1>
-
 <p align="center">
   <img src="https://img.shields.io/badge/AWS-Cloud%20Infra-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white"/>
   <img src="https://img.shields.io/badge/Terraform-IaC-7B42BC?style=for-the-badge&logo=terraform&logoColor=white"/>
@@ -13,7 +11,7 @@
 
 ---
 
-# DevSecOps Infrastructure (Terraform + EKS)
+# DevSecOps Infrastructure (Terraform + EKS + Ansible)
 
 Infrastructure-as-code to stand up a Jenkins-centric toolchain VPC, EC2 hosts (Jenkins/Nexus/SonarQube), and an EKS cluster with ordered addon deployment matching the observed eksctl flow from the GitHub wiki.
 
