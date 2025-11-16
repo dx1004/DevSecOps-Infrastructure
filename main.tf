@@ -312,9 +312,6 @@ module "secure_shop_eks" {
       capacity_type  = "ON_DEMAND"
       ami_type       = "AL2_x86_64"
       disk_size      = 20
-      remote_access = {
-        ec2_ssh_key = aws_key_pair.eks.key_name
-      }
 
       labels = {
         role = "jenkins"
