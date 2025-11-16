@@ -35,7 +35,7 @@ Infrastructure-as-code to stand up a Jenkins-centric toolchain VPC, EC2 hosts (J
 ### 1) Prepare
 
 - Clone the repo and `cd` into it (Terraform files are at repo root; Ansible under `ansible/`).
-- Export AWS credentials/config or set `AWS_PROFILE`.
+- Configure the AWS CLI with valid credentials and default region (`aws configure`) or set `AWS_PROFILE`/`AWS_REGION`.
 - (Optional) Update `variables.tf` defaults or provide overrides via `terraform.tfvars` / `-var`.
 
 ### 2) Provision infrastructure with Terraform
@@ -50,17 +50,11 @@ Key outputs: VPC, subnets/route tables/IGW, security groups, EC2 hosts (Jenkins/
 
 ### 3) Configure servers with Ansible
 
-Install Ansible deps (if needed):
+Run Ansible from the repo root (inventory is generated under `ansible/` from Terraform):
 
 ```bash
-cd ansible
-ansible-galaxy install -r requirements.yml
-```
-
-Run the main playbook (uses generated inventory and `jenkins-key.pem`):
-
-```bash
-ansible-playbook -i inventory/hosts.ini site.yml
+ansible-galaxy install -r ansible/requirements.yml
+ansible-playbook -i ansible/inventory/hosts.ini ansible/site.yml
 ```
 
 Roles executed: `common`, `jenkins`, `nexus`, `sonarqube`.
